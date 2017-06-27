@@ -4,7 +4,7 @@ import processing.svg.PGraphicsSVG;
 ControlP5 controlP5;
 
 // 幅と高さ
-int cellWidth = 16;
+int cellWidth = 20;
 int cellHeight = 20;
 int centerPos = cellWidth/2;
 
@@ -73,12 +73,13 @@ int colorleft = 25;
 int celHeight = 20;
 
 void setup() {
-  size(600, 500);
+  size(600, 600);
   background(30);
   init_rules();
   noStroke();
 
   PFont font = loadFont("FilsonSoft-Bold-36.vlw");
+  font = loadFont("AgencyFB-Reg-15.vlw");
   textFont(font);
 
   //初期セルの初期化
@@ -125,6 +126,15 @@ void draw() {
     colorMode(RGB, 255);
     drawCells();
     drawTriangle();
+    stroke(255, 0,0);
+    strokeWeight(2);
+    noFill();
+    rect(init_row_left_pos, init_row_top_pos, cellsize * cellWidth, cellsize);
+    noStroke();
+    fill(200, 230, 230);
+    text("Click!", init_row_left_pos, init_row_top_pos -5);
+    text("->  Image for EXPORT", init_row_left_pos + cellsize * (cellWidth +1), init_row_top_pos -5);
+    strokeWeight(1);
     reset_flag = 0;
   }
 
@@ -207,7 +217,7 @@ void setControllers() {
 
   controlP5.addButton("export_PNG")
     .setValue(0)
-    .setPosition(posX, )
+    .setPosition(posX, posY)
     .setSize(ContWidth, 20)
     ;
 
@@ -217,22 +227,24 @@ void setControllers() {
     .setPosition(posX, posY)
     .setSize(ContWidth, 20)
     ;
-    
-    posY += 30;
-      r1 = cp5.addRadioButton("radioButton")
-         .setPosition(posX,posY)
-         .setSize(ContWidth,20)
-         .setColorForeground(color(120))
-         .setColorActive(color(255))
-         .setColorLabel(color(255))
-         .setItemsPerRow(4)
-         .setSpacingColumn(50)
-         .addItem("Non",1)//何もしない
-         .addItem("Auto",2)//自動で決定（色が多い方）
-         .addItem("Zero",3)//0の色優先
-         .addItem("One",4)//1の色優先
-         ;
 
+  posY += 30;
+
+  r1 = controlP5.addRadioButton("radioButton")
+    .setPosition(posX, posY)
+    .setSize(ContWidth, 20)
+    //.setColorForeground(color(120))
+    //.setColorActive(color(255))
+    .setColorLabel(color(255))
+    .setItemsPerRow(4)
+    .setSpacingColumn(50)
+    .addItem("Non", 1)//何もしない
+    .addItem("Auto", 2)//自動で決定（色が多い方）
+    .addItem("Zero", 3)//0の色優先
+    .addItem("One", 4)//1の色優先
+    .activate(1)
+    .toUpperCase(true)
+    ;
 }
 
 public void controlEvent(ControlEvent c) {
@@ -245,6 +257,29 @@ public void controlEvent(ControlEvent c) {
     int a = int(c.getArrayValue(3));
     color col = color(r, g, b, a);
     //println("event\talpha:"+a+"\tred:"+r+"\tgreen:"+g+"\tblue:"+b+"\tcol"+col);
+  } else if (c.isFrom(r1)) {
+    print("got an event from "+c.getName()+"\t");
+    for (int i=0; i<c.getGroup().getArrayValue().length; i++) {
+      print(int(c.getGroup().getArrayValue()[i]));
+    }
+    println("\t "+c.getValue());
+
+    int val = (int)c.getValue();
+
+    switch(val) {
+    case 1:
+      outputMode = MargeMode.Non;
+      break;
+    case 2:
+      outputMode = MargeMode.Auto;
+      break;
+    case 3:
+      outputMode = MargeMode.Zero;
+      break;
+    case 4:
+      outputMode = MargeMode.One;
+      break;
+    }
   }
 }
 
@@ -317,7 +352,7 @@ void updateCells() {
 
 void drawCopyCells() {
 
-  int posX = init_row_left_pos + cellsize * (cellWidth + 1);
+  int posX = init_row_left_pos + cellsize * (cellWidth + 2);
   int posY = init_row_top_pos;  
   int revPoint = 100;
 
@@ -348,8 +383,8 @@ void drawCopyCells() {
 // これはセルの行を描画する the row is x=top, y=left.
 void draw_cell_row(int[] cells, int left, int top, Boolean show_counter, Boolean hilite_mouse_over) {
   if (show_counter) {
-    fill(0);
-    text(counter, left - 20, top + 15);
+    fill(255);
+    text(counter, left + cellsize * cellWidth +10, top + cellsize );
   }
 
   for (int i = 0; i < cells.length; i++) {
@@ -430,32 +465,47 @@ void drawTriangle() {
   //triangle(topX, topY, topX -10, topY +10, topX + 10, topY +10);
 
   int defidx = centerPos;
-  int itrNum = (cellWidth -1) / 2;
+  int itrNum = (cellWidth) / 2;
 
-  for (int j = 1; j < cellHeight+1; j++) {
+  for (int j = 1; j < itrNum+1; j++) {
 
-    int triNum = (j-1) * 2 + 1;
-    cur_tri_cells = new int[triNum + 2];
-    new_tri_cells = new int[triNum + 4];
+    
+    int startidx = defidx - (j-1);
+    int triWidth = j*2 -1;
+    if(startidx < 0){
+     break; 
+    }
+    //int triNum = (j-1) * 2 + 1;
+    //cur_tri_cells = new int[triNum + 2];
+    //new_tri_cells = new int[triNum + 4];
 
     //new_tri_cells[0] = firstVal;
     //new_tri_cells[triNum + 3] = firstVal;
 
-    int t[] = copy_row(triangles[j-1], cur_tri_cells);
-    arrayCopy(t, cur_tri_cells);
+    //int t[] = copy_row(triangles[j-1], cur_tri_cells);
+    //arrayCopy(t, cur_tri_cells);
 
 
-    if ( j < 3) {
-      println("j: " + j + "  cur_tri_cells");
-      println(cur_tri_cells);
-    }
+    //if ( j < 3) {
+    //  println("j: " + j + "  cur_tri_cells");
+    //  println(cur_tri_cells);
+    //}
     float startPosX = - triW_2 * (j - 1);
     float startPosY = triH * (j - 1);
     //println(startPosX, startPosY);
 
 
-    for (int i = 1; i < triNum+1; i++) {
+//    for (int i = 1; i < triNum+1; i++) {
+    for (int i = 1; i < triWidth+1; i++) {  
 
+       int cellVal = copyCells[j-1][startidx + i-1];
+       if (cellVal == 0) {
+        fill(negColor);
+      } else {
+        fill(posColor);
+      }
+      
+      /*
       int lid = i -1;
       int mid = i ;
       int rid = i+1 ;
@@ -492,13 +542,13 @@ void drawTriangle() {
         println("(" + j + ", " + i + ") = (" + left + ", " + middle + ", " + right + ") -> " +  new_tri_cells[i]);
       }
 
-
       if (triangles[j-1][i] == 0) {
         fill(negColor);
       } else {
         fill(posColor);
       }
-
+*/
+      
       if (i % 2 == 1) {
 
         //fill(100, 100, 100);
@@ -523,10 +573,12 @@ void drawTriangle() {
         triangle(triBot_x, triBot_y, triTopL_x, triTopL_y, triTopR_x, triTopR_y);
       }
     }
+    /*
     if (j < cellHeight) {
       int[] _t = copy_row(new_tri_cells, triangles[j]);
       arrayCopy(_t, triangles[j]);
     }
+    */
   }
 }
 
@@ -558,8 +610,8 @@ class Rule {
   void draw() {
     int text_x = posx - cellsize - 50;
     int row_y = posy - round(cellsize*1.5);
-    fill(0);
-    textSize(10);
+    fill(255);
+    textSize(15);
     text(label, text_x, row_y + 15);
     draw_one_cell(posx-cellsize, row_y, state_left, false);
     draw_one_cell(posx, row_y, state_mid, false);
@@ -598,7 +650,8 @@ int apply_rule (int a, int b, int c) {
 }
 
 void draw_rules () {
-  textSize(17);
+  textSize(15);
+  fill(255);
   for (int i = 0; i < rule.length; i++) {
     rule[i].draw();
   }
@@ -708,11 +761,11 @@ void mousePressed() {
 }
 
 void keyPressed() {
-  
-  if(!checkSetup){
+
+  if (!checkSetup) {
     checkSetup = true;
   }
-  
+
   if (key == ENTER) {        
     export_SVG();
   }
@@ -803,6 +856,9 @@ void export_PNG() {
 }
 
 
+
+
+
 /////////////////////// export_svg ///////////////////////////////////////////
 
 void export_SVG() {
@@ -818,6 +874,45 @@ void export_SVG() {
 
   String name = "CAPattern-" + cellWidth +  "x" + cellHeight + ".svg";
 
+  boolean count = false;
+  int Num0=0, Num1=0;
+  int BGVal = -1;
+
+  switch(outputMode) {
+
+  case Non:
+    break;
+
+  case Auto:
+    count = true;
+    break;
+
+  case Zero:
+    BGVal = 0;
+    break;
+
+  case One:
+    BGVal = 1;
+    break;
+  }
+
+  if (count) {
+    for (int j=0; j<cellHeight; j++) {
+      for (int i=0; i<cellWidth; i++) {
+        if ( copyCells[j][i] == 0 ) {
+          Num0++;
+        } else if ( copyCells[j][i] == 1 ) {
+          Num1++;
+        }
+      }
+    }
+    if (Num0 >= Num1) {
+      BGVal = 0;
+    } else if (Num0 < Num1) {
+      BGVal = 1;
+    }
+  }
+
   PGraphics pg;
   pg = createGraphics(w, h, SVG, name);
   pg.beginDraw();
@@ -831,14 +926,28 @@ void export_SVG() {
    }    
    pg.rect(cell_w * i, 0, cell_w, cell_h);
    }*/
+
+  if (BGVal != -1) {
+    if (BGVal == 0) {
+      pg.fill(negColor);
+    } else if (BGVal == 1) {
+      pg.fill(posColor);
+    }
+    pg.rect(0, 0, w, h);
+  }
+
   for (int j=0; j<cellHeight; j++) {
     for (int i=0; i<cellWidth; i++) {
+
       if (copyCells[j][i] == 0) {
         pg.fill(negColor);
       } else if (copyCells[j][i] == 1) {
         pg.fill(posColor);
       }
-      pg.rect(cell_w * i, cell_h * j, cell_w, cell_h);
+
+      if (copyCells[j][i] != BGVal) {
+        pg.rect(cell_w * i, cell_h * j, cell_w, cell_h);
+      }
     }
   }
 

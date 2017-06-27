@@ -1,4 +1,4 @@
-import controlP5.*; //<>// //<>//
+import controlP5.*; //<>//
 import processing.svg.PGraphicsSVG;
 
 ControlP5 controlP5;
@@ -13,13 +13,18 @@ int cellW = 250;
 int cellMaxWidth = 40;
 int cellMaxHeight = 40;
 
+int exportScale = 1;
+
 // 0と1の色
 color posColor = color(0, 255, 0);
 color negColor = color(255, 0, 0);
 ColorPicker posCP;
 ColorPicker negCP;
 
-//
+//起動時の勝手な画像生成防止用
+boolean checkSetup =false;
+
+//機能用パラメータ
 boolean useLoop = false;  //左右のループをありにするか
 boolean useReverseH = false;  //縦方向に反転するか
 //boolean useReverseW = false;  //横方向に反転するか
@@ -33,11 +38,13 @@ boolean useEditer = false;  //出力先を編集するか
 int function_num = 0;
 ArrayList<FuncButton> Functions = new ArrayList<FuncButton>();
 
+RadioButton r1;
+
 enum MargeMode {
   Non, //何もしない
     Auto, //自動で決定（色が多い方）
-    zero, //ゼロの色優先
-    one    //イチの色優先
+    Zero, //ゼロの色優先
+    One    //イチの色優先
 };
 MargeMode outputMode = MargeMode.Auto;
 
@@ -102,6 +109,7 @@ void setup() {
 
   controlP5 = new ControlP5(this);
   setControllers();
+  checkSetup = true;
 
   //Functions.add(new FuncButton(++function_num, "Loop", 10, height - 40, 50, 18));
 }
@@ -188,6 +196,43 @@ void setControllers() {
     ;
 
   posY += 30;
+
+  controlP5.addButton("export_JPG")
+    .setValue(0)
+    .setPosition(posX, posY)
+    .setSize(ContWidth, 20)
+    ;
+
+  posY += 30;
+
+  controlP5.addButton("export_PNG")
+    .setValue(0)
+    .setPosition(posX, )
+    .setSize(ContWidth, 20)
+    ;
+
+  posY += 30;
+  controlP5.addButton("export_SVG")
+    .setValue(0)
+    .setPosition(posX, posY)
+    .setSize(ContWidth, 20)
+    ;
+    
+    posY += 30;
+      r1 = cp5.addRadioButton("radioButton")
+         .setPosition(posX,posY)
+         .setSize(ContWidth,20)
+         .setColorForeground(color(120))
+         .setColorActive(color(255))
+         .setColorLabel(color(255))
+         .setItemsPerRow(4)
+         .setSpacingColumn(50)
+         .addItem("Non",1)//何もしない
+         .addItem("Auto",2)//自動で決定（色が多い方）
+         .addItem("Zero",3)//0の色優先
+         .addItem("One",4)//1の色優先
+         ;
+
 }
 
 public void controlEvent(ControlEvent c) {
@@ -479,10 +524,9 @@ void drawTriangle() {
       }
     }
     if (j < cellHeight) {
-        int[] _t = copy_row(new_tri_cells, triangles[j]);
-        arrayCopy(_t, triangles[j]);
+      int[] _t = copy_row(new_tri_cells, triangles[j]);
+      arrayCopy(_t, triangles[j]);
     }
-
   }
 }
 
@@ -664,37 +708,134 @@ void mousePressed() {
 }
 
 void keyPressed() {
+  
+  if(!checkSetup){
+    checkSetup = true;
+  }
+  
   if (key == ENTER) {        
-    export_svg();
+    export_SVG();
   }
 }
 
-/////////////////////// export_svg ///////////////////////////////////////////
 
-void export_svg() {
+void export_JPG() {
 
-  int w = 400;
-  int h = 400;
-  float cell_w = w / cellWidth;
-  float cell_h = h / cellHeight;
+  if (!checkSetup) {
+    return;
+  }
+
+  int w = cellWidth * cellsize * exportScale;
+  int h = cellHeight * cellsize * exportScale;
+  float cell_w = cellsize * exportScale;
+  float cell_h = cellsize * exportScale;
 
   PGraphics pg;
-  pg = createGraphics(w, h, SVG, "PGraphics.svg");
+
+  pg = createGraphics(w, h);
   pg.beginDraw();
   pg.noStroke();
+  /*
   for (int i=0; i<cellWidth; i++) {
-    if (init_cells[i] == 0) {
-      pg.fill(negColor);
-    } else if (init_cells[i] == 1) {
-      pg.fill(posColor);
-    }    
-    pg.rect(cell_w * i, 0, cell_w, cell_h);
-  }
-  for (int j=0; j<3; j++) {
+   if (init_cells[i] == 0) {
+   pg.fill(negColor);
+   } else if (init_cells[i] == 1) {
+   pg.fill(posColor);
+   }    
+   pg.rect(cell_w * i, 0, cell_w, cell_h);
+   }
+   */
+  for (int j=0; j<cellHeight; j++) {
     for (int i=0; i<cellWidth; i++) {
-      if (cells[j][i] == 0) {
+      if (copyCells[j][i] == 0) {
         pg.fill(negColor);
-      } else if (cells[j][i] == 1) {
+      } else if (copyCells[j][i] == 1) {
+        pg.fill(posColor);
+      }
+      pg.rect(cell_w * i, cell_h * j, cell_w, cell_h);
+    }
+  }
+
+  //pg.ellipse(pg.width/2, pg.height/2, 100, 100);
+  pg.endDraw();
+  pg.save("CAPattern-" + cellWidth +  "x" + cellHeight + ".jpg");
+}
+
+
+void export_PNG() {
+
+  if (!checkSetup) {
+    return;
+  }
+  int w = cellWidth * cellsize * exportScale;
+  int h = cellHeight * cellsize * exportScale;
+  float cell_w = cellsize * exportScale;
+  float cell_h = cellsize * exportScale;
+
+  PGraphics pg;
+
+  pg = createGraphics(w, h);
+  pg.beginDraw();
+  pg.noStroke();
+  /*
+  for (int i=0; i<cellWidth; i++) {
+   if (init_cells[i] == 0) {
+   pg.fill(negColor);
+   } else if (init_cells[i] == 1) {
+   pg.fill(posColor);
+   }    
+   pg.rect(cell_w * i, 0, cell_w, cell_h);
+   }*/
+  for (int j=0; j<cellHeight; j++) {
+    for (int i=0; i<cellWidth; i++) {
+      if (copyCells[j][i] == 0) {
+        pg.fill(negColor);
+      } else if (copyCells[j][i] == 1) {
+        pg.fill(posColor);
+      }
+      pg.rect(cell_w * i, cell_h * j, cell_w, cell_h);
+    }
+  }
+
+  //pg.ellipse(pg.width/2, pg.height/2, 100, 100);
+  pg.endDraw();
+  pg.save("CAPattern-" + cellWidth +  "x" + cellHeight + ".png");
+}
+
+
+/////////////////////// export_svg ///////////////////////////////////////////
+
+void export_SVG() {
+
+  if (!checkSetup) {
+    return;
+  }
+
+  int w = cellWidth * cellsize * exportScale;
+  int h = cellHeight * cellsize * exportScale;
+  float cell_w = cellsize * exportScale;
+  float cell_h = cellsize * exportScale;
+
+  String name = "CAPattern-" + cellWidth +  "x" + cellHeight + ".svg";
+
+  PGraphics pg;
+  pg = createGraphics(w, h, SVG, name);
+  pg.beginDraw();
+  pg.noStroke();
+  /*
+  for (int i=0; i<cellWidth; i++) {
+   if (init_cells[i] == 0) {
+   pg.fill(negColor);
+   } else if (init_cells[i] == 1) {
+   pg.fill(posColor);
+   }    
+   pg.rect(cell_w * i, 0, cell_w, cell_h);
+   }*/
+  for (int j=0; j<cellHeight; j++) {
+    for (int i=0; i<cellWidth; i++) {
+      if (copyCells[j][i] == 0) {
+        pg.fill(negColor);
+      } else if (copyCells[j][i] == 1) {
         pg.fill(posColor);
       }
       pg.rect(cell_w * i, cell_h * j, cell_w, cell_h);

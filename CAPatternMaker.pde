@@ -247,25 +247,6 @@ void setControllers() {
   color saveColor = color(50, 215, 215);
   color saveBGCOlor = color(30, 60, 60);
 
-  r1 = controlP5.addRadioButton("radioButton")
-    .setPosition(posX, posY) 
-    .setSize(ContWidth, 10)
-    //.setColorForeground(color(120))
-    .setColorActive(saveColor)
-    .setColorForeground(saveColor)
-    .setColorBackground(saveBGCOlor) 
-    .setColorLabel(color(255))
-    .setItemsPerRow(1)
-    .setSpacingColumn(50)
-    .addItem("Non", 1)//何もしない
-    .addItem("Auto", 2)//自動で決定（色が多い方）
-    .addItem("Zero", 3)//0の色優先
-    .addItem("One", 4)//1の色優先
-    .activate(1)
-    .toUpperCase(true)
-    ;
-  posY += 50;
-
   controlP5.addButton("export_JPG")
     .setValue(0)
     .setPosition(posX, posY)
@@ -287,6 +268,26 @@ void setControllers() {
     ;
 
   posY += 30;
+  
+    r1 = controlP5.addRadioButton("radioButton")
+    .setPosition(posX, posY) 
+    .setSize(ContWidth, 10)
+    //.setColorForeground(color(120))
+    .setColorActive(saveColor)
+    .setColorForeground(saveColor)
+    .setColorBackground(saveBGCOlor) 
+    .setColorLabel(color(255))
+    .setItemsPerRow(1)
+    .setSpacingColumn(50)
+    .addItem("Non", 1)//何もしない
+    .addItem("Auto", 2)//自動で決定（色が多い方）
+    .addItem("Zero", 3)//0の色優先
+    .addItem("One", 4)//1の色優先
+    .activate(1)
+    .toUpperCase(true)
+    ;
+  posY += 50;
+  
   controlP5.addButton("export_SVG")
     .setValue(0)
     .setPosition(posX, posY)

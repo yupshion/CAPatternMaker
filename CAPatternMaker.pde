@@ -39,8 +39,13 @@ int function_num = 0;
 ArrayList<FuncButton> Functions = new ArrayList<FuncButton>();
 
 float triDegree = 60;
+Slider triDeg;
+
+int PolygonNum = 6;
+Slider plyNum;
 
 RadioButton r1;
+RadioButton triButton;
 
 enum MargeMode {
   Non, //何もしない
@@ -49,6 +54,13 @@ enum MargeMode {
     One    //イチの色優先
 };
 MargeMode outputMode = MargeMode.Auto;
+
+enum TriangleMode {
+  Default, //何もしない
+    Triangle, //自動で決定（色が多い方）
+    Polygon, //ゼロの色優先
+};
+TriangleMode triMode = TriangleMode.Default;
 
 int[] init_cells   = new int[cellWidth];
 int[][] cells      = new int[cellHeight][cellWidth];
@@ -154,15 +166,17 @@ void setControllers() {
 
   int posX = 40;
   int posY = /*round(cellsize * 2.5)*/ init_row_top_pos + rule.length * cellsize * 3;
+  int defX = posX;
+  int defY = posY;
   int ContWidth = 50;
   color textcolor = color(180, 210, 240);
-  
+
   fill(textcolor);
   textSize(15);
   text("-RULES-", posX, init_row_top_pos-20);
 
   fill(255);
-    text("Color 1", posX+100, posY-10);
+  text("Color 1", posX+100, posY-10);
 
   posCP = controlP5.addColorPicker("posColor")
     .setPosition(posX + 100, posY)
@@ -205,9 +219,9 @@ void setControllers() {
   fill(textcolor);
   textSize(15);
   text("-SETTING-", posX, posY);
-  
+
   posY += 10;
-  
+
   controlP5.addToggle("useLoop")
     .setPosition(posX, posY)
     .setSize(ContWidth, 10)
@@ -250,7 +264,7 @@ void setControllers() {
     .activate(1)
     .toUpperCase(true)
     ;
-     posY += 50;
+  posY += 50;
 
   controlP5.addButton("export_JPG")
     .setValue(0)
@@ -286,22 +300,55 @@ void setControllers() {
 
   fill(textcolor);
   textSize(15);
-  text("-TRIANGLE-", posX, posY);
-  
-  posY += 10;
-    
-      controlP5.addSlider("triDegree")
-    .setPosition(posX, posY)
+  int triX = posX + 100 + posCP.getWidth() + 20;
+  text("-TRIANGLE-", triX, defY -10);
+
+  int triY = defY + 150;
+  triY += 10;
+
+  triDeg = controlP5.addSlider("triDegree")
+    .setPosition(triX, triY)
     .setSize(ContWidth *2, 10)
-    .setRange(15, 170) // values can range from big to small as well
+    .setRange(5, 175) // values can range from big to small as well
     .setValue(triDegree)
-    .setNumberOfTickMarks(8)
+    //.setNumberOfTickMarks(8)
     .setSliderMode(Slider.FLEXIBLE)
     ;
 
-  posY += 30;
+  triY += 30;
 
-    
+  int rangeMin = 3;
+  int rangeMax = 12;
+  int deg = rangeMax - rangeMin;
+
+  plyNum = controlP5.addSlider("PolygonNum")
+    .setPosition(triX, triY)
+    .setSize(ContWidth *3, 10)
+    .setRange(rangeMin, rangeMax) // values can range from big to small as well
+    .setValue(PolygonNum)
+    .setNumberOfTickMarks(deg)
+    .setSliderMode(Slider.FLEXIBLE)
+    .setStringValue("Polygon")
+    ;
+  controlP5.getController("PolygonNum").getCaptionLabel().align(ControlP5.LEFT, ControlP5.TOP_OUTSIDE).setPaddingX(0);
+
+
+  triButton = controlP5.addRadioButton("triButton")
+    .setPosition(posX, posY) 
+    .setSize(ContWidth, 10)
+    //.setColorForeground(color(120))
+    .setColorActive(saveColor)
+    .setColorForeground(saveColor)
+    .setColorBackground(saveBGCOlor) 
+    .setColorLabel(color(255))
+    .setItemsPerRow(1)
+    .setSpacingColumn(50)
+    .addItem("Default", 1)//使わない
+    .addItem("Triangle", 2)//三角形
+    .addItem("Polygon", 3)//正多角形
+    .activate(0)
+    .toUpperCase(true)
+    ;
 }
 
 public void controlEvent(ControlEvent c) {
@@ -309,7 +356,7 @@ public void controlEvent(ControlEvent c) {
   // from the controller's array value
   if (c.isFrom(posCP)) {
     reset_flag  =1;
-    
+
     int r = int(c.getArrayValue(0));
     int g = int(c.getArrayValue(1));
     int b = int(c.getArrayValue(2));
@@ -317,7 +364,7 @@ public void controlEvent(ControlEvent c) {
     posColor = color(r, g, b);
     //println("event\talpha:"+a+"\tred:"+r+"\tgreen:"+g+"\tblue:"+b+"\tcol"+col);
   } else if (c.isFrom(negCP)) {
-    
+
     reset_flag  =1;
     int r = int(c.getArrayValue(0));
     int g = int(c.getArrayValue(1));
@@ -326,7 +373,7 @@ public void controlEvent(ControlEvent c) {
     negColor = color(r, g, b);
     //println("event\talpha:"+a+"\tred:"+r+"\tgreen:"+g+"\tblue:"+b+"\tcol"+col);
   } else if (c.isFrom(r1)) {
-    
+
     reset_flag  =1;
     print("got an event from "+c.getName()+"\t");
     for (int i=0; i<c.getGroup().getArrayValue().length; i++) {
@@ -348,6 +395,33 @@ public void controlEvent(ControlEvent c) {
       break;
     case 4:
       outputMode = MargeMode.One;
+      break;
+    }
+  } else if (c.isFrom(plyNum)) {
+    float deg = 360 / PolygonNum;
+    triDegree = deg;
+    triDeg.setValue(triDegree);
+  } else if (c.isFrom(triButton)) {
+
+    reset_flag  =1;
+    /*
+    print("got an event from "+c.getName()+"\t");
+     for (int i=0; i<c.getGroup().getArrayValue().length; i++) {
+     print(int(c.getGroup().getArrayValue()[i]));
+     }
+     println("\t "+c.getValue());*/
+
+    int val = (int)c.getValue();
+
+    switch(val) {
+    case 1:
+      triMode = TriangleMode.Default;
+      break;
+    case 2:
+      triMode = TriangleMode.Triangle;
+      break;
+    case 3:
+      triMode = TriangleMode.Polygon;
       break;
     }
   }
@@ -517,17 +591,17 @@ int[] copy_row_fromNum(int[] from, int[] to) {
 void drawTriangle() {
 
 
-  
+
   float topX = 500;
   float topY = 300;
   float topDegree = triDegree;
   float theta = radians(topDegree / 2);
   float triW_2 = cellsize * sin(theta);
   float triH = cellsize * cos(theta);
-  
+
   fill(30);
   rect(topX-200, topY, 500, 500);
-  
+
   noStroke();
   fill(150);
   int[][] triangles = new int[cellHeight][cellHeight * 2 + 1];
@@ -861,33 +935,152 @@ void export_JPG() {
 
   PGraphics pg;
 
-  pg = createGraphics(w, h);
-  pg.beginDraw();
-  pg.noStroke();
-  /*
-  for (int i=0; i<cellWidth; i++) {
-   if (init_cells[i] == 0) {
-   pg.fill(negColor);
-   } else if (init_cells[i] == 1) {
-   pg.fill(posColor);
-   }    
-   pg.rect(cell_w * i, 0, cell_w, cell_h);
-   }
-   */
-  for (int j=0; j<cellHeight; j++) {
-    for (int i=0; i<cellWidth; i++) {
-      if (copyCells[j][i] == 0) {
-        pg.fill(negColor);
-      } else if (copyCells[j][i] == 1) {
-        pg.fill(posColor);
-      }
-      pg.rect(cell_w * i, cell_h * j, cell_w, cell_h);
-    }
-  }
+  if (triMode == TriangleMode.Default) {
+    pg = createGraphics(w, h);
+    pg.beginDraw();
+    pg.noStroke();
 
-  //pg.ellipse(pg.width/2, pg.height/2, 100, 100);
-  pg.endDraw();
-  pg.save("CAPattern-" + cellWidth +  "x" + cellHeight + ".jpg");
+    /*
+  for (int i=0; i<cellWidth; i++) {
+     if (init_cells[i] == 0) {
+     pg.fill(negColor);
+     } else if (init_cells[i] == 1) {
+     pg.fill(posColor);
+     }    
+     pg.rect(cell_w * i, 0, cell_w, cell_h);
+     }
+     */
+    for (int j=0; j<cellHeight; j++) {
+      for (int i=0; i<cellWidth; i++) {
+        if (copyCells[j][i] == 0) {
+          pg.fill(negColor);
+        } else if (copyCells[j][i] == 1) {
+          pg.fill(posColor);
+        }
+        pg.rect(cell_w * i, cell_h * j, cell_w, cell_h);
+      }
+    }
+
+    //pg.ellipse(pg.width/2, pg.height/2, 100, 100);
+    pg.endDraw();
+    pg.save("CAPattern-" + cellWidth +  "x" + cellHeight + ".jpg");
+  } 
+
+
+
+  ///三角形出力
+  else if (triMode == TriangleMode.Triangle || triMode == TriangleMode.Polygon) {
+
+
+    float topDegree = triDegree;
+    
+    int loop = 1;
+    if(triMode == TriangleMode.Polygon){
+      
+      loop = PolygonNum;
+      topDegree = 360 /PolygonNum;
+    }
+    
+    float theta = radians(topDegree / 2);
+    float triW_2 = cellsize * sin(theta);
+    float triH = cellsize * cos(theta);
+
+    int defidx = centerPos;
+    int itrNum = (cellWidth +1) / 2;
+
+    float topX = (triW_2 *2* itrNum + 1) /2;
+    float topY = 0;
+    pg = createGraphics((int)(triW_2 * 2 * (itrNum)), (int)(triH * itrNum));
+    
+    float axisX = topX;
+    float axisY = topY;
+    
+    float loopdeg = 0;
+    if(triMode == TriangleMode.Polygon){
+      pg = null;
+      int _w = (int)(10 * itrNum * 2) + 100;//(triW_2 * 2 * (itrNum) * 2);
+      int _h = (int)(triH * itrNum * 2) + 250;
+      topX = _w/2;
+      topY = _h/2;
+      axisX = topX;
+      axisY = topY;
+      topX = 0;
+      topY = 0;
+      pg = createGraphics(_w, _h);
+      loopdeg = radians(topDegree);
+    }
+    
+
+    // pg = createGraphics((int)(100),(int)(100));
+    pg.beginDraw();
+    pg.noStroke();
+    pg.translate(axisX, axisY);
+    
+
+
+    for(int k=0; k < loop; k++){
+    
+      pg.pushMatrix(); //(0, 0)を原点とする座標軸をスタックに格納
+      //pg.translate(axisX, axisY);
+    
+
+    for (int j = 1; j < itrNum+1; j++) {
+
+
+      int startidx = defidx - (j-1);
+      int triWidth = j*2 -1;
+      if (startidx < 0) {
+        break;
+      }
+      float startPosX = - triW_2 * (j - 1);
+      float startPosY = triH * (j - 1);
+
+      for (int i = 1; i < triWidth+1; i++) {  
+
+        int cellVal = copyCells[j-1][startidx + i-1];
+        if (cellVal == 0) {
+          pg.fill(negColor);
+        } else {
+          pg.fill(posColor);
+        }
+
+
+        if (i % 2 == 1) {
+
+          //fill(100, 100, 100);
+          float triTop_x = startPosX + triW_2 * (i-1)+ topX;
+          float triTop_y = startPosY + topY;
+          float triBotL_x = triTop_x - triW_2;
+          float triBotL_y = triTop_y + triH;
+          float triBotR_x = triTop_x + triW_2;  
+          float triBotR_y = triTop_y + triH;       
+
+          pg.triangle(triTop_x, triTop_y, triBotL_x, triBotL_y, triBotR_x, triBotR_y);
+        } else if (i % 2 == 0) {
+
+          //fill(200, 200, 200);
+          float triBot_x = startPosX + triW_2 * (i-1)+ topX;
+          float triBot_y = startPosY + topY + triH;
+          float triTopL_x = triBot_x - triW_2;
+          float triTopL_y = triBot_y - triH;
+          float triTopR_x = triBot_x + triW_2;  
+          float triTopR_y = triBot_y - triH;    
+
+          pg.triangle(triBot_x, triBot_y, triTopL_x, triTopL_y, triTopR_x, triTopR_y);
+        }
+      }
+    }
+      pg.rotate(loopdeg);
+  }
+  
+      pg.endDraw();
+    pg.save("CAPatternTri-" + cellWidth +  "x" + cellHeight + ".jpg");
+        if(triMode == TriangleMode.Polygon){
+          
+          pg.save("CAPatternPoly" + triDegree + "-"+ cellWidth +  "x" + cellHeight + ".png");
+        }
+    
+  }
 }
 
 
@@ -896,39 +1089,112 @@ void export_PNG() {
   if (!checkSetup) {
     return;
   }
+  PGraphics pg;
   int w = cellWidth * cellsize * exportScale;
   int h = cellHeight * cellsize * exportScale;
   float cell_w = cellsize * exportScale;
   float cell_h = cellsize * exportScale;
 
-  PGraphics pg;
+  if (triMode == TriangleMode.Default) {
 
-  pg = createGraphics(w, h);
-  pg.beginDraw();
-  pg.noStroke();
-  /*
+
+
+
+    pg = createGraphics(w, h);
+    pg.beginDraw();
+    pg.noStroke();
+    /*
   for (int i=0; i<cellWidth; i++) {
-   if (init_cells[i] == 0) {
-   pg.fill(negColor);
-   } else if (init_cells[i] == 1) {
-   pg.fill(posColor);
-   }    
-   pg.rect(cell_w * i, 0, cell_w, cell_h);
-   }*/
-  for (int j=0; j<cellHeight; j++) {
-    for (int i=0; i<cellWidth; i++) {
-      if (copyCells[j][i] == 0) {
-        pg.fill(negColor);
-      } else if (copyCells[j][i] == 1) {
-        pg.fill(posColor);
+     if (init_cells[i] == 0) {
+     pg.fill(negColor);
+     } else if (init_cells[i] == 1) {
+     pg.fill(posColor);
+     }    
+     pg.rect(cell_w * i, 0, cell_w, cell_h);
+     }*/
+    for (int j=0; j<cellHeight; j++) {
+      for (int i=0; i<cellWidth; i++) {
+        if (copyCells[j][i] == 0) {
+          pg.fill(negColor);
+        } else if (copyCells[j][i] == 1) {
+          pg.fill(posColor);
+        }
+        pg.rect(cell_w * i, cell_h * j, cell_w, cell_h);
       }
-      pg.rect(cell_w * i, cell_h * j, cell_w, cell_h);
     }
-  }
 
-  //pg.ellipse(pg.width/2, pg.height/2, 100, 100);
-  pg.endDraw();
-  pg.save("CAPattern-" + cellWidth +  "x" + cellHeight + ".png");
+    //pg.ellipse(pg.width/2, pg.height/2, 100, 100);
+    pg.endDraw();
+    pg.save("CAPattern-" + cellWidth +  "x" + cellHeight + ".png");
+  }
+  ///三角形出力
+  else if (triMode == TriangleMode.Triangle) {
+
+
+    float topDegree = triDegree;
+    float theta = radians(topDegree / 2);
+    float triW_2 = cellsize * sin(theta);
+    float triH = cellsize * cos(theta);
+
+    int defidx = centerPos;
+    int itrNum = (cellWidth +1) / 2;
+
+    float topX = (triW_2 *2* itrNum + 1) /2;
+    float topY = 0;
+    pg = createGraphics((int)(triW_2 * 2 * (itrNum)), (int)(triH * itrNum));
+    // pg = createGraphics((int)(100),(int)(100));
+    pg.beginDraw();
+    pg.noStroke();
+
+    for (int j = 1; j < itrNum+1; j++) {
+
+
+      int startidx = defidx - (j-1);
+      int triWidth = j*2 -1;
+      if (startidx < 0) {
+        break;
+      }
+      float startPosX = - triW_2 * (j - 1);
+      float startPosY = triH * (j - 1);
+
+      for (int i = 1; i < triWidth+1; i++) {  
+
+        int cellVal = copyCells[j-1][startidx + i-1];
+        if (cellVal == 0) {
+          pg.fill(negColor);
+        } else {
+          pg.fill(posColor);
+        }
+
+
+        if (i % 2 == 1) {
+
+          //fill(100, 100, 100);
+          float triTop_x = startPosX + triW_2 * (i-1)+ topX;
+          float triTop_y = startPosY + topY;
+          float triBotL_x = triTop_x - triW_2;
+          float triBotL_y = triTop_y + triH;
+          float triBotR_x = triTop_x + triW_2;  
+          float triBotR_y = triTop_y + triH;       
+
+          pg.triangle(triTop_x, triTop_y, triBotL_x, triBotL_y, triBotR_x, triBotR_y);
+        } else if (i % 2 == 0) {
+
+          //fill(200, 200, 200);
+          float triBot_x = startPosX + triW_2 * (i-1)+ topX;
+          float triBot_y = startPosY + topY + triH;
+          float triTopL_x = triBot_x - triW_2;
+          float triTopL_y = triBot_y - triH;
+          float triTopR_x = triBot_x + triW_2;  
+          float triTopR_y = triBot_y - triH;    
+
+          pg.triangle(triBot_x, triBot_y, triTopL_x, triTopL_y, triTopR_x, triTopR_y);
+        }
+      }
+    }
+    pg.endDraw();
+    pg.save("CAPatternTri-" + cellWidth +  "x" + cellHeight + ".png");
+  }
 }
 
 
@@ -990,43 +1256,115 @@ void export_SVG() {
   }
 
   PGraphics pg;
-  pg = createGraphics(w, h, SVG, name);
-  pg.beginDraw();
-  pg.noStroke();
-  /*
+
+  if (triMode == TriangleMode.Default) {
+
+    pg = createGraphics(w, h, SVG, name);
+    pg.beginDraw();
+    pg.noStroke();
+    /*
   for (int i=0; i<cellWidth; i++) {
-   if (init_cells[i] == 0) {
-   pg.fill(negColor);
-   } else if (init_cells[i] == 1) {
-   pg.fill(posColor);
-   }    
-   pg.rect(cell_w * i, 0, cell_w, cell_h);
-   }*/
+     if (init_cells[i] == 0) {
+     pg.fill(negColor);
+     } else if (init_cells[i] == 1) {
+     pg.fill(posColor);
+     }    
+     pg.rect(cell_w * i, 0, cell_w, cell_h);
+     }*/
 
-  if (BGVal != -1) {
-    if (BGVal == 0) {
-      pg.fill(negColor);
-    } else if (BGVal == 1) {
-      pg.fill(posColor);
-    }
-    pg.rect(0, 0, w, h);
-  }
-
-  for (int j=0; j<cellHeight; j++) {
-    for (int i=0; i<cellWidth; i++) {
-
-      if (copyCells[j][i] == 0) {
+    if (BGVal != -1) {
+      if (BGVal == 0) {
         pg.fill(negColor);
-      } else if (copyCells[j][i] == 1) {
+      } else if (BGVal == 1) {
         pg.fill(posColor);
       }
+      pg.rect(0, 0, w, h);
+    }
 
-      if (copyCells[j][i] != BGVal) {
-        pg.rect(cell_w * i, cell_h * j, cell_w, cell_h);
+    for (int j=0; j<cellHeight; j++) {
+      for (int i=0; i<cellWidth; i++) {
+
+        if (copyCells[j][i] == 0) {
+          pg.fill(negColor);
+        } else if (copyCells[j][i] == 1) {
+          pg.fill(posColor);
+        }
+
+        if (copyCells[j][i] != BGVal) {
+          pg.rect(cell_w * i, cell_h * j, cell_w, cell_h);
+        }
       }
     }
-  }
 
-  //pg.ellipse(pg.width/2, pg.height/2, 100, 100);
-  pg.endDraw();
+    //pg.ellipse(pg.width/2, pg.height/2, 100, 100);
+    pg.endDraw();
+  } else if (triMode == TriangleMode.Triangle) {
+
+
+    float topDegree = triDegree;
+    float theta = radians(topDegree / 2);
+    float triW_2 = cellsize * sin(theta);
+    float triH = cellsize * cos(theta);
+
+    int defidx = centerPos;
+    int itrNum = (cellWidth +1) / 2;
+
+    float topX = (triW_2 *2* itrNum + 1) /2;
+    float topY = 0;
+    String _name = "CAPatternTri-" + cellWidth +  "x" + cellHeight + ".svg";
+
+    // pg = createGraphics((int)(triW_2 * 2 * (itrNum)),(int)(triH * itrNum));
+    pg = createGraphics(w, h, SVG, _name);
+    // pg = createGraphics((int)(100),(int)(100));
+    pg.beginDraw();
+    pg.noStroke();
+
+    for (int j = 1; j < itrNum+1; j++) {
+
+
+      int startidx = defidx - (j-1);
+      int triWidth = j*2 -1;
+      if (startidx < 0) {
+        break;
+      }
+      float startPosX = - triW_2 * (j - 1);
+      float startPosY = triH * (j - 1);
+
+      for (int i = 1; i < triWidth+1; i++) {  
+
+        int cellVal = copyCells[j-1][startidx + i-1];
+        if (cellVal == 0) {
+          pg.fill(negColor);
+        } else {
+          pg.fill(posColor);
+        }
+
+
+        if (i % 2 == 1) {
+
+          //fill(100, 100, 100);
+          float triTop_x = startPosX + triW_2 * (i-1)+ topX;
+          float triTop_y = startPosY + topY;
+          float triBotL_x = triTop_x - triW_2;
+          float triBotL_y = triTop_y + triH;
+          float triBotR_x = triTop_x + triW_2;  
+          float triBotR_y = triTop_y + triH;       
+
+          pg.triangle(triTop_x, triTop_y, triBotL_x, triBotL_y, triBotR_x, triBotR_y);
+        } else if (i % 2 == 0) {
+
+          //fill(200, 200, 200);
+          float triBot_x = startPosX + triW_2 * (i-1)+ topX;
+          float triBot_y = startPosY + topY + triH;
+          float triTopL_x = triBot_x - triW_2;
+          float triTopL_y = triBot_y - triH;
+          float triTopR_x = triBot_x + triW_2;  
+          float triTopR_y = triBot_y - triH;    
+
+          pg.triangle(triBot_x, triBot_y, triTopL_x, triTopL_y, triTopR_x, triTopR_y);
+        }
+      }
+    }
+    pg.endDraw();
+  }
 }

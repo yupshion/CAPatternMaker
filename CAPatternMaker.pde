@@ -4,7 +4,7 @@ import processing.svg.PGraphicsSVG;
 ControlP5 controlP5;
 
 // 幅と高さ
-int cellWidth = 20;
+int cellWidth = 21;
 int cellHeight = 20;
 int centerPos = cellWidth/2;
 
@@ -16,8 +16,8 @@ int cellMaxHeight = 40;
 int exportScale = 1;
 
 // 0と1の色
-color posColor = color(0, 255, 0);
-color negColor = color(255, 0, 0);
+color posColor = color(255, 0, 255);
+color negColor = color(50, 50, 100);
 ColorPicker posCP;
 ColorPicker negCP;
 
@@ -37,6 +37,8 @@ boolean useEditer = false;  //出力先を編集するか
 
 int function_num = 0;
 ArrayList<FuncButton> Functions = new ArrayList<FuncButton>();
+
+float triDegree = 60;
 
 RadioButton r1;
 
@@ -66,7 +68,7 @@ int counter = 0;
 int reset_flag = 1;
 
 int init_row_left_pos = 150;//round(80 + cellsize * 3 + 60);
-int init_row_top_pos = 30;//cellsize;
+int init_row_top_pos = 50;//cellsize;
 
 int colortop = 240;
 int colorleft = 25;
@@ -120,13 +122,14 @@ void draw() {
   //繰り返しの速さを少しだけ遅らせる
   delay(1);
 
+
   drawTriangle();
 
   if (reset_flag == 1) {
     colorMode(RGB, 255);
     drawCells();
     drawTriangle();
-    stroke(255, 0,0);
+    stroke(255, 0, 0);
     strokeWeight(2);
     noFill();
     rect(init_row_left_pos, init_row_top_pos, cellsize * cellWidth, cellsize);
@@ -152,42 +155,59 @@ void setControllers() {
   int posX = 40;
   int posY = /*round(cellsize * 2.5)*/ init_row_top_pos + rule.length * cellsize * 3;
   int ContWidth = 50;
+  color textcolor = color(180, 210, 240);
+  
+  fill(textcolor);
+  textSize(15);
+  text("-RULES-", posX, init_row_top_pos-20);
+
+  fill(255);
+    text("Color 1", posX+100, posY-10);
+
+  posCP = controlP5.addColorPicker("posColor")
+    .setPosition(posX + 100, posY)
+    .setColorValue(posColor)
+    //.setWidth(ContWidth)
+    ;
+
+  posY += posCP.getHeight() * 7 + 20;
+
+  text("Color 0", posX+100, posY-10);
+  negCP = controlP5.addColorPicker("negColor")
+    .setPosition(posX + 100, posY )
+    .setColorValue(negColor)
+    //.setWidth(ContWidth)
+    ;
+
+
+
+  posY -= posCP.getHeight() * 7 +20;
+  println(posCP.getHeight());
 
   /*
-  posCP = controlP5.addColorPicker("picker")
-   .setPosition(posX, posY)
-   //.setWidth(ContWidth)
-   .setColorValue(color(255, 128, 0, 128))
-   ;
-   posY += posCP.getHeight() * 7;
-   println(posCP.getHeight());
-   */
   controlP5.addColorWheel("posColor", 250, 10, 200 )
-    .setPosition(posX + 300, posY)
-    .setRGB(color(255, 0, 255))
-    //.setSize(100, 100)
-    ;
-
-  controlP5.addColorWheel("negColor", 250, 10, 200 )
-    .setPosition(posX + 600, posY)
-    .setRGB(color(128, 0, 255))
-    //.setSize(100, 100)
-    ;
-
+   .setPosition(posX + 300, posY)
+   .setRGB(color(255, 0, 255))
+   //.setSize(100, 100)
+   ;
+   
+   controlP5.addColorWheel("negColor", 250, 10, 200 )
+   .setPosition(posX + 600, posY)
+   .setRGB(color(128, 0, 255))
+   //.setSize(100, 100)
+   ;
+   */
   //cp5 = new ControlP5( this );
   //cp5.addColorWheel("c" , 250 , 10 , 200 ).setRGB(color(128,0,255));
 
-  controlP5.addSlider("sliderTicks2")
-    .setPosition(posX, posY)
-    .setSize(ContWidth, 10)
-    .setRange(255, 0) // values can range from big to small as well
-    .setValue(128)
-    .setNumberOfTickMarks(7)
-    .setSliderMode(Slider.FLEXIBLE)
-    ;
+  posY += 10;
 
-  posY += 30;
-
+  fill(textcolor);
+  textSize(15);
+  text("-SETTING-", posX, posY);
+  
+  posY += 10;
+  
   controlP5.addToggle("useLoop")
     .setPosition(posX, posY)
     .setSize(ContWidth, 10)
@@ -205,38 +225,23 @@ void setControllers() {
     .setMode(ControlP5.SWITCH)
     ;
 
-  posY += 30;
+  posY += 55;
 
-  controlP5.addButton("export_JPG")
-    .setValue(0)
-    .setPosition(posX, posY)
-    .setSize(ContWidth, 20)
-    ;
-
-  posY += 30;
-
-  controlP5.addButton("export_PNG")
-    .setValue(0)
-    .setPosition(posX, posY)
-    .setSize(ContWidth, 20)
-    ;
-
-  posY += 30;
-  controlP5.addButton("export_SVG")
-    .setValue(0)
-    .setPosition(posX, posY)
-    .setSize(ContWidth, 20)
-    ;
-
-  posY += 30;
+  fill(textcolor);
+  textSize(15);
+  text("-EXPORT-", posX, posY-10);
+  color saveColor = color(50, 215, 215);
+  color saveBGCOlor = color(30, 60, 60);
 
   r1 = controlP5.addRadioButton("radioButton")
-    .setPosition(posX, posY)
-    .setSize(ContWidth, 20)
+    .setPosition(posX, posY) 
+    .setSize(ContWidth, 10)
     //.setColorForeground(color(120))
-    //.setColorActive(color(255))
+    .setColorActive(saveColor)
+    .setColorForeground(saveColor)
+    .setColorBackground(saveBGCOlor) 
     .setColorLabel(color(255))
-    .setItemsPerRow(4)
+    .setItemsPerRow(1)
     .setSpacingColumn(50)
     .addItem("Non", 1)//何もしない
     .addItem("Auto", 2)//自動で決定（色が多い方）
@@ -245,19 +250,84 @@ void setControllers() {
     .activate(1)
     .toUpperCase(true)
     ;
+     posY += 50;
+
+  controlP5.addButton("export_JPG")
+    .setValue(0)
+    .setPosition(posX, posY)
+    .setSize(ContWidth, 20)
+    .setColorActive(saveColor)
+    .setColorForeground(saveColor)
+    .setColorBackground(saveBGCOlor) 
+    ;
+
+  posY += 30;
+
+  controlP5.addButton("export_PNG")
+    .setValue(0)
+    .setPosition(posX, posY)
+    .setSize(ContWidth, 20)
+    .setColorActive(saveColor)
+    .setColorForeground(saveColor)
+    .setColorBackground(saveBGCOlor) 
+    ;
+
+  posY += 30;
+  controlP5.addButton("export_SVG")
+    .setValue(0)
+    .setPosition(posX, posY)
+    .setSize(ContWidth, 20)
+    .setColorActive(saveColor)
+    .setColorForeground(saveColor)
+    .setColorBackground(saveBGCOlor) 
+    ;
+
+  posY += 40;
+
+  fill(textcolor);
+  textSize(15);
+  text("-TRIANGLE-", posX, posY);
+  
+  posY += 10;
+    
+      controlP5.addSlider("triDegree")
+    .setPosition(posX, posY)
+    .setSize(ContWidth *2, 10)
+    .setRange(15, 170) // values can range from big to small as well
+    .setValue(triDegree)
+    .setNumberOfTickMarks(8)
+    .setSliderMode(Slider.FLEXIBLE)
+    ;
+
+  posY += 30;
+
+    
 }
 
 public void controlEvent(ControlEvent c) {
   // when a value change from a ColorPicker is received, extract the ARGB values
   // from the controller's array value
   if (c.isFrom(posCP)) {
+    reset_flag  =1;
+    
     int r = int(c.getArrayValue(0));
     int g = int(c.getArrayValue(1));
     int b = int(c.getArrayValue(2));
-    int a = int(c.getArrayValue(3));
-    color col = color(r, g, b, a);
+    //int a = int(c.getArrayValue(3));
+    posColor = color(r, g, b);
+    //println("event\talpha:"+a+"\tred:"+r+"\tgreen:"+g+"\tblue:"+b+"\tcol"+col);
+  } else if (c.isFrom(negCP)) {
+    
+    reset_flag  =1;
+    int r = int(c.getArrayValue(0));
+    int g = int(c.getArrayValue(1));
+    int b = int(c.getArrayValue(2));
+    //int a = int(c.getArrayValue(3));
+    negColor = color(r, g, b);
     //println("event\talpha:"+a+"\tred:"+r+"\tgreen:"+g+"\tblue:"+b+"\tcol"+col);
   } else if (c.isFrom(r1)) {
+    
+    reset_flag  =1;
     print("got an event from "+c.getName()+"\t");
     for (int i=0; i<c.getGroup().getArrayValue().length; i++) {
       print(int(c.getGroup().getArrayValue()[i]));
@@ -446,12 +516,18 @@ int[] copy_row_fromNum(int[] from, int[] to) {
 
 void drawTriangle() {
 
-  float topX = 200;
+
+  
+  float topX = 500;
   float topY = 300;
-  float topDegree = 60;
+  float topDegree = triDegree;
   float theta = radians(topDegree / 2);
   float triW_2 = cellsize * sin(theta);
   float triH = cellsize * cos(theta);
+  
+  fill(30);
+  rect(topX-200, topY, 500, 500);
+  
   noStroke();
   fill(150);
   int[][] triangles = new int[cellHeight][cellHeight * 2 + 1];
@@ -465,15 +541,15 @@ void drawTriangle() {
   //triangle(topX, topY, topX -10, topY +10, topX + 10, topY +10);
 
   int defidx = centerPos;
-  int itrNum = (cellWidth) / 2;
+  int itrNum = (cellWidth +1) / 2;
 
   for (int j = 1; j < itrNum+1; j++) {
 
-    
+
     int startidx = defidx - (j-1);
     int triWidth = j*2 -1;
-    if(startidx < 0){
-     break; 
+    if (startidx < 0) {
+      break;
     }
     //int triNum = (j-1) * 2 + 1;
     //cur_tri_cells = new int[triNum + 2];
@@ -495,60 +571,60 @@ void drawTriangle() {
     //println(startPosX, startPosY);
 
 
-//    for (int i = 1; i < triNum+1; i++) {
+    //    for (int i = 1; i < triNum+1; i++) {
     for (int i = 1; i < triWidth+1; i++) {  
 
-       int cellVal = copyCells[j-1][startidx + i-1];
-       if (cellVal == 0) {
+      int cellVal = copyCells[j-1][startidx + i-1];
+      if (cellVal == 0) {
         fill(negColor);
       } else {
         fill(posColor);
       }
-      
+
       /*
       int lid = i -1;
-      int mid = i ;
-      int rid = i+1 ;
+       int mid = i ;
+       int rid = i+1 ;
+       
+       if ( j < 3) {
+       println("その１ lid:" + lid + ", mid:"  + mid + ", rid: " + rid);
+       }
+       
+       if (useLoop) {
+       lid = (triNum + 2 + lid) % (triNum +2);
+       mid = (triNum + 2 + mid) % (triNum +2);
+       rid = (triNum + 2 + rid) % (triNum +2);
+       } else {
+       if (i == 1 || i == cur_cells.length +1 - 1 ) {
+       continue;
+       }
+       }
+       
+       
+       int left   = cur_tri_cells[lid];
+       int middle = cur_tri_cells[mid];
+       int right  = cur_tri_cells[rid];
+       
+       if ( j < 3) {
+       println("その２　lid:" + lid + ", mid:"  + mid + ", rid: " + rid);
+       println("j: " + j + "  Second  cur_tri_cells");
+       println(cur_tri_cells);
+       }
+       
+       // 新しい状態をセット
+       new_tri_cells[i] = apply_rule(left, middle, right);     
+       
+       if ( j < 3) {
+       println("(" + j + ", " + i + ") = (" + left + ", " + middle + ", " + right + ") -> " +  new_tri_cells[i]);
+       }
+       
+       if (triangles[j-1][i] == 0) {
+       fill(negColor);
+       } else {
+       fill(posColor);
+       }
+       */
 
-      if ( j < 3) {
-        println("その１ lid:" + lid + ", mid:"  + mid + ", rid: " + rid);
-      }
-
-      if (useLoop) {
-        lid = (triNum + 2 + lid) % (triNum +2);
-        mid = (triNum + 2 + mid) % (triNum +2);
-        rid = (triNum + 2 + rid) % (triNum +2);
-      } else {
-        if (i == 1 || i == cur_cells.length +1 - 1 ) {
-          continue;
-        }
-      }
-
-
-      int left   = cur_tri_cells[lid];
-      int middle = cur_tri_cells[mid];
-      int right  = cur_tri_cells[rid];
-
-      if ( j < 3) {
-        println("その２　lid:" + lid + ", mid:"  + mid + ", rid: " + rid);
-        println("j: " + j + "  Second  cur_tri_cells");
-        println(cur_tri_cells);
-      }
-
-      // 新しい状態をセット
-      new_tri_cells[i] = apply_rule(left, middle, right);     
-
-      if ( j < 3) {
-        println("(" + j + ", " + i + ") = (" + left + ", " + middle + ", " + right + ") -> " +  new_tri_cells[i]);
-      }
-
-      if (triangles[j-1][i] == 0) {
-        fill(negColor);
-      } else {
-        fill(posColor);
-      }
-*/
-      
       if (i % 2 == 1) {
 
         //fill(100, 100, 100);
@@ -575,10 +651,10 @@ void drawTriangle() {
     }
     /*
     if (j < cellHeight) {
-      int[] _t = copy_row(new_tri_cells, triangles[j]);
-      arrayCopy(_t, triangles[j]);
-    }
-    */
+     int[] _t = copy_row(new_tri_cells, triangles[j]);
+     arrayCopy(_t, triangles[j]);
+     }
+     */
   }
 }
 
@@ -596,7 +672,7 @@ class Rule {
   // 結果を呼ぶ時のインタラクティブディスプレイの場所表示に使われる
   int posx=100; // positions are used for interactive display of the resulting cell state
   // 新しい状態を表示する
-  int posy=50; // (posx, posy) is the topleft corner of the cell showing the new state
+  int posy=500; // (posx, posy) is the topleft corner of the cell showing the new state
 
   // Contructor コンストラクタ
   Rule(String name, int left, int mid, int right, int newstat) {
@@ -609,7 +685,7 @@ class Rule {
 
   void draw() {
     int text_x = posx - cellsize - 50;
-    int row_y = posy - round(cellsize*1.5);
+    int row_y = posy - round(cellsize*1.5) ;
     fill(255);
     textSize(15);
     text(label, text_x, row_y + 15);
@@ -633,7 +709,7 @@ void init_rules() {
   rule[6]=new Rule("Rule 07", 0, 0, 1, 1);
   rule[7]=new Rule("Rule 08", 0, 0, 0, 0);
   for (int i = 0; i < rule.length; i++) {
-    rule[i].posy = round(cellsize * 2.5) + i * cellsize * 3;
+    rule[i].posy =  i * cellsize * 3 + init_row_top_pos + round(cellsize * 0.5);
   }
 }
 

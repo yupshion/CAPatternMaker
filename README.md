@@ -3,4 +3,4 @@ Cellular Automaton Pattern Maker can make pattern and export as jpg, png and svg
 セルオートマトンによって生成した画像をJPEG, PNG, SVG形式に保存することができるアプリケーションです。 Processing3で動作します。
 
 # 紹介映像
-https://www.youtube.com/embed/iroAlYXO43U
+https://youtu.be/iroAlYXO43U
